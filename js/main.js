@@ -3,6 +3,7 @@
 function onInit() {
   bookService.createBooks();
   render();
+  renderPagination();
 }
 
 function render() {
@@ -41,6 +42,29 @@ function render() {
     .join('');
 
   document.querySelector('.books-table tbody').innerHTML = bookStr;
+}
+
+function renderPagination() {
+  var pageCount = bookService.getPageCount();
+
+  var strHtml = `<li class="page-item disabled page-prev"
+                      onclick="onPageChange(this, event, 'prev')">
+                  <a class="page-link" href="#" tabindex="-1">Previous</a>
+                </li>`;
+
+  for (var i = 0; i < pageCount; i++) {
+    strHtml += `<li class="page-item page-num ${i === 0 ? 'active' : ''}"
+                    data-pagenum="${i}"
+                    onclick="onPageChange(this,event, '${i}')">
+                      <a class="page-link" href="#" >${i + 1}</a>
+                    </li>`;
+  }
+
+  strHtml += `<li class="page-item page-next" onclick="onPageChange(this,event,'next')">
+                <a class="page-link" href="#">Next</a>
+              </li>`;
+
+  document.querySelector('.book-pagination').innerHTML = strHtml;
 }
 
 function onBookDetails(bookId) {
@@ -180,4 +204,33 @@ function toggleOtherBtns(bookId, disable) {
 function onRateChange(bookId, direction) {
   var newRate = bookService.updateRate(bookId, direction);
   document.querySelector('#bookDetails .rate').innerText = newRate;
+}
+
+function onPageChange(elPageNum, ev, pageNum) {
+  ev.preventDefault();
+
+  var currPage = bookService.changePage(pageNum);
+  var pageCount = bookService.getPageCount();
+  var elNext = document.querySelector('.page-next');
+  var elPrev = document.querySelector('.page-prev');
+
+  if (currPage > 0) {
+    elPrev.classList.remove('disabled');
+  } else {
+    elPrev.querySelector('.page-prev').classList.add('disabled');
+  }
+
+  if (currPage < pageCount - 1) {
+    elNext.classList.remove('disabled');
+  } else {
+    elNext.classList.add('disabled');
+  }
+  var elPagination = document.querySelectorAll('.book-pagination .page-num');
+
+  elPagination.forEach(function(el) {
+    if (+el.dataset.pagenum === currPage) el.classList.add('active');
+    else el.classList.remove('active');
+  });
+
+  render();
 }

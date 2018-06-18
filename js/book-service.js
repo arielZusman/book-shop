@@ -35,6 +35,8 @@ var bookService = (function() {
     dir: 'asc'
   };
   var gBooks;
+  var gPerPage = 1;
+  var gCurrPage = 0;
 
   // private methods
   function createBook(name, price, img, rate) {
@@ -52,6 +54,7 @@ var bookService = (function() {
       return book.id === id;
     });
   }
+
   function saveBooks() {
     saveToStorage(BOOKS_KEY, gBooks);
   }
@@ -83,6 +86,13 @@ var bookService = (function() {
     });
   }
 
+  function paginate(arr, perPage, page) {
+    var basePage = page * perPage;
+
+    return page < 0 || perPage < 1 || basePage >= arr.length
+      ? []
+      : arr.slice(basePage, basePage + perPage);
+  }
   // public methods
   function createBooks() {
     var books = loadFromStorage(BOOKS_KEY);
@@ -100,6 +110,7 @@ var bookService = (function() {
     // keep gBook private
     var books = JSON.parse(JSON.stringify(gBooks));
 
+    books = paginate(books, gPerPage, gCurrPage);
     switch (gSortByProp.prop) {
       case 'name':
         books = sortByName(books);
@@ -171,6 +182,25 @@ var bookService = (function() {
     return book;
   }
 
+  function getPageCount() {
+    return Math.ceil(gBooks.length / gPerPage);
+  }
+
+  function changePage(pageNum) {
+    var pageCount = getPageCount();
+    switch (pageNum) {
+      case 'next':
+        gCurrPage = gCurrPage + 1 < pageCount ? gCurrPage + 1 : gCurrPage;
+        break;
+      case 'prev':
+        gCurrPage = gCurrPage - 1 >= 0 ? gCurrPage - 1 : gCurrPage;
+        break;
+      default:
+        gCurrPage = pageNum;
+        break;
+    }
+    return gCurrPage;
+  }
   return {
     createBooks: createBooks,
     getBooksForDisplay: getBooksForDisplay,
@@ -179,6 +209,8 @@ var bookService = (function() {
     getBookById: getBookById,
     updateBook: updateBook,
     updateRate: updateRate,
-    updateSortByProp: updateSortByProp
+    updateSortByProp: updateSortByProp,
+    getPageCount: getPageCount,
+    changePage: changePage
   };
 })();
